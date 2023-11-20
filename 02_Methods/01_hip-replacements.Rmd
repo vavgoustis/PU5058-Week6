@@ -1,0 +1,135 @@
+---
+title: PU5058 - Week Six - Practical Exercise
+author: Victoria Avgoustis
+date: November 19, 2023
+output: pdf
+---
+
+# Aim
+The aim of this exercise is to manipulate "Hip Replacement CCG 1819" data into a specific tidy data frame. 
+
+# Load Packages
+```{r Load Packages, include=FALSE}
+library(tidyverse)
+library(here)
+library(ggplot2)
+library(hrbrthemes)
+```
+
+# Read in Data
+
+```{r Read Data}
+operation_Data <- read_csv(here("01_Input/01_Raw-Data/Hip Replacement CCG 1819.csv"))
+head(operation_Data)
+```
+
+# Prepare the Data
+## Selecting Gender, Pre and Post Operation, and 'EQ-5D Index' scores
+```{r Select Variables}
+selected_Operation_Data <- operation_Data %>%
+  select('Gender','Pre-Op Q EQ5D Index','Post-Op Q EQ5D Index') %>%
+  rename(
+    Gender = 'Gender',
+    Pre_Op_Index = 'Pre-Op Q EQ5D Index',
+    Post_op_Index = 'Post-Op Q EQ5D Index'
+  )
+glimpse(selected_Operation_Data)
+```
+## Check for Unique Vlues
+```{r Unique}
+selected_Operation_Data$Gender %>% unique()
+selected_Operation_Data$Pre_Op_Index %>% unique()
+selected_Operation_Data$Post_op_Index %>% unique()
+```
+## Check Value Frequencies
+```{r Variable Frequency}
+selected_Operation_Data$Gender %>% table()
+selected_Operation_Data$Pre_Op_Index %>% table()
+selected_Operation_Data$Post_op_Index %>% table()
+```
+
+## Remove Missing Values
+```{r Remove Missing Values}
+filtered_Operation_Data <- selected_Operation_Data %>%
+  drop_na() %>%
+  filter(Gender != '*')
+glimpse(filtered_Operation_Data)
+```
+## Make Tidy Table
+```{r Make Tidy}
+tidy_Operational_Data <- filtered_Operation_Data %>%
+  pivot_longer(c(Pre_Op_Index,Post_op_Index),
+               names_to = 'Time',
+               names_prefix = 'EQ5D_',
+               values_to = 'EQ-5D Index'
+               )
+head(tidy_Operational_Data)
+```
+## Factors
+```{r Factors}
+tidy_Operational_Data$Time <- 
+  factor(tidy_Operational_Data$Time,levels=c('Pre_Op_Index','Post_op_Index'))
+tidy_Operational_Data
+```
+## Rename Index
+```{r Rename Index}
+plot_ready_Operational_Data <- tidy_Operational_Data %>%
+  rename(EQ5D = 'EQ-5D Index')
+plot_ready_Operational_Data
+```
+
+## Plotting
+```{r}
+fact_Operation_Data <- plot_ready_Operational_Data %>%
+  mutate(Gender = factor(plot_ready_Operational_Data$Gender,levels=c('1','2')))
+
+fact_Operation_Data %>%
+  ggplot() +
+  geom_boxplot(aes(x = Time, y = EQ5D, colour = Gender))
+
+```
+
+
+## Plotting... Muhahahah... Yes I know these graphs don't make much sense....
+
+```{r Scatter Plot}
+
+ggplot(fact_Operation_Data, aes(x=Gender,y=EQ5D,fill=Time)) + 
+  geom_bar(stat = "identity", position = "identity") + 
+  labs(title = "Simple Graphh",
+       x="Gender",
+       y="Time")
+```
+```{r Plotting}
+
+x <- fact_Operation_Data$Gender
+y <- fact_Operation_Data$Time
+z <- fact_Operation_Data$EQ5D
+
+ggplot(fact_Operation_Data, aes(x,y,fill=z)) + geom_tile()
+
+```
+## Part 2 - Calculate how many patients in this dataset have been told by a doctor that they have problems caused by a stroke
+```{r}
+stroke_table <- operation_Data %>%
+  select(operation_Data$Stroke) %>%
+  summarise(Stroke_total = sum(operation_Data$Stroke))
+stroke_table
+```
+## Part 3 - Create a clean and tidy table with pre and post operation activity levels
+```{r}
+operation_Data
+```
+
+
+```{r}
+activity_data <- operation_Data %>%
+  select('Pre-Op Q Activity','Post-Op Q Activity') %>%
+  pivot_longer(cols = c('Pre-Op Q Activity', 'Post-Op Q Activity'),
+               names_to = 'Type',
+               values_to = 'Activity')
+activity_data
+
+```
+
+
