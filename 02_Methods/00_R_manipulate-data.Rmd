@@ -273,13 +273,22 @@ table(fev_data$age,fev_data$smoke)
 --> **Problem 1**: Which subjects are male and which are female? (i.e. what does sex == 1 mean?)
 
 ```{r}
-glimpse(fev_data)
+
+fev_data %>%
+  group_by(sex) %>%
+  summarise(mean_height = mean(height, na.rm = TRUE))
+
 # Seems like 0 = female and 1 - male (based on height stereotypes)
 ```
 --> **Problem 2**: Why do smokers appear to have better lung function (higher forced expiratory volume - FEV)?
 
 ```{r}
-fev_data %>% summarise(fev_data$smoke,fev_data$fev)
+glimpse(fev_data)
+fev_under_15 <- fev_data %>% filter(age < 15)
+fev_under_15 %>% group_by(sex, smoke) %>% summarise(mean_fev = mean(fev, na.rm = FALSE))
+fev_15_plus <- fev_data %>% filter(age >= 15)
+fev_15_plus %>% group_by(sex, smoke) %>% summarise(mean_fev = mean(fev, na.rm=FALSE))
+
 ```
 
 Useful function: rename
